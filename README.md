@@ -48,7 +48,7 @@ sudo systemctl reload nginx
 
 ### s2-lb 域名入口与证书
 
-域名入口：`https://drawing.wujialei.com:8080/`。`192.168.202.2` 的原生 Nginx 使用 `deploy/drawing-lb.nginx.conf`，监听 8080，并转发到 `http://192.168.202.10/`。同一端口收到 HTTP 时，返回 308 跳转，保留路径和查询参数。内网已验证；独立公网访问目前故障，正在排查入口链路，内网访问公网 IP 不等于公网验收通过。
+域名入口：`https://drawing.wujialei.com:8000/`。主路由将公网 TCP 8000 映射到 `192.168.202.2:80`；s2-lb 的原生 Nginx 使用 `deploy/drawing-lb.nginx.conf`，在 80 端口处理 TLS，再转发到 `http://192.168.202.10/`。部署时需禁用 s2-lb 的 Nginx 默认欢迎站点，原 8080 TLS 监听保留。HTTP 返回 308 跳转到 HTTPS，保留访问端口、路径和查询参数。2026-10-18 独立公网节点确认 18080 TCP 连通，配置调整后用户确认 18080 可以访问，随后将公网入口改为 8000；本机验证 8000 的 TLS、画板构建内容和跳转正确。原公网 8080 入站超时的具体原因未确定。
 
 证书同步工具为 `deploy/fnos-ssls-sync.py`，部署于 s2-lb 的 `/usr/local/sbin/fnos-ssls-sync`。它通过验证 TLS 的 `https://nginx.wujialei.com:18443` 拉取授权的 `*.wujialei.com`，连接地址固定为 `192.168.202.202`。凭据来自服务器本机 `/home/rocky/nginx.wujialei.com.md`，只保存在 root 可读的 `/etc/fnos-ssls-sync/auth.header`，不得提交到 Git；连接配置为同目录的 `config.json`。
 

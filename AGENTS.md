@@ -5,4 +5,4 @@
 3. 业务代码编码时，禁止数据库多表联表查询。
 4. Web 部署只按照 HTTP 进行部署。
 5. 遇到无法决定的事情，请 3 位专家一起讨论方案。
-6. 画板服务器原生安装 Nginx，通过 80 端口直接提供 HTTP 静态文件，不使用 Docker。域名和 HTTPS 证书由 s2-lb 统一处理，通过 drawing.wujialei.com:8080 转发到画板服务器。
+6. 画板服务器原生安装 Nginx，通过 80 端口直接提供 HTTP 静态文件，不使用 Docker。域名和 HTTPS 证书由 s2-lb 统一处理。公网 drawing.wujialei.com:8000 映射到 s2-lb 的 80 端口（TLS），再通过 HTTP 转发到画板服务器；s2-lb 原 8080 监听保留。HTTP 跳转到 HTTPS 时保留访问端口。
