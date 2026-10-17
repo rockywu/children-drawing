@@ -22,15 +22,29 @@ npm run preview
 
 ## Web 部署与安装
 
-运行 `npm ci && npm run build`，将 `dist/` 整个目录发布到静态网站服务。正式地址需要 HTTPS，支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
+运行 `npm ci && npm run build`，将 `dist/` 整个目录发布到 HTTP 静态网站服务。按照项目规则，Web 部署只使用 HTTP。支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
 
 首页左下角有“保存为 Web App”入口。Chrome / Edge 支持时会打开系统安装确认，其他情况显示适合当前设备的操作步骤；Safari 可添加到程序坞，iPhone / iPad 可添加到主屏幕。Electron 和已用独立应用模式打开的页面隐藏此入口。系统安装需要用户确认，网页不能绕过系统权限。
 
-首次联网打开并完成缓存后，生产 Web 版可离线打开、画画和保存到本机。开发模式不启用离线缓存。更新会等待所有画画窗口关闭后生效，不会自动刷新正在画的作品。局域网 HTTP 地址可以画画，但浏览器会限制安装与离线能力；`localhost` 可用于本机预览。
+局域网 HTTP 地址支持画画和本地保存，但浏览器会限制原生 Web App 安装与离线缓存，安装入口会显示手动操作说明。`localhost` 属于浏览器安全上下文例外，生产构建可在本机验证缓存后的离线打开、画画和保存。开发模式不启用离线缓存。缓存更新会等待所有画画窗口关闭后生效，不会自动刷新正在画的作品。
 
 服务器应正确返回 JavaScript、PNG 与 `application/manifest+json` 类型。对 `index.html`、`sw.js` 和 `manifest.webmanifest` 使用 `Cache-Control: no-cache`；带哈希的 `assets/` 可使用长期缓存。子目录部署须保持完整目录结构，访问 `/drawing/` 而不是 `/drawing`，并避免将缺失的脚本或图片返回成 HTML。
 
 Web App 的作品仍保存在当前设备、当前站点的浏览器存储中。切换域名、协议、端口或清理站点数据不会迁移作品；重要作品请下载 PNG。iOS 等系统添加到主屏幕后的存储可能独立，请先备份已有作品。
+
+### 内网 Nginx 静态服务
+
+服务器使用系统包管理器原生安装 Nginx，不使用 Docker 或反向代理。将完整 `dist/` 内容放到 `/opt/drawing/html/`，再安装项目的站点配置：
+
+```bash
+sudo install -m 644 deploy/drawing.nginx.conf /etc/nginx/sites-available/drawing
+sudo ln -s /etc/nginx/sites-available/drawing /etc/nginx/sites-enabled/drawing
+sudo nginx -t
+sudo systemctl enable nginx
+sudo systemctl reload nginx
+```
+
+服务监听 `0.0.0.0:8001`，Nginx 开机自启。本服务器不启用安装包自带的默认 80 端口站点。内网入口为 `http://192.168.202.10:8001/`。此 HTTP 入口支持画画和本地保存；原生 Web App 安装与离线缓存受浏览器安全上下文限制。服务器只提供静态文件，不接收作品数据。
 
 ## 可以体验
 
