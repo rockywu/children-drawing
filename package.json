@@ -1,0 +1,83 @@
+{
+  "name": "little-art-planet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "desktop": "npm run build && electron .",
+    "dist:mac": "npm run build && electron-builder --mac --x64 --arm64",
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:all": "npm run build && electron-builder --mac --win --x64 && electron-builder --mac --arm64"
+  },
+  "dependencies": {
+    "lucide-vue-next": "^0.468.0",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "electron": "44.7.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.10",
+    "vue-tsc": "^3.1.1"
+  },
+  "description": "画画星球：让 8～12 岁孩子自由创作的绘画软件",
+  "author": "Little Art Planet",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.littleartplanet.drawing",
+    "productName": "画画星球",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "artifactName": "Little-Art-Planet-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.education",
+      "identity": "-"
+    },
+    "dmg": {
+      "title": "画画星球",
+      "contents": [
+        {
+          "x": 130,
+          "y": 170
+        },
+        {
+          "x": 410,
+          "y": 170,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "画画星球"
+    }
+  }
+}
