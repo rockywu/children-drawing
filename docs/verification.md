@@ -6,6 +6,8 @@
 
 以下包含历次检查记录；专注模式已在后续调整中移除，涉及该模式的条目仅记录当时结果。画纸现已支持多比例，早期 1000×680 固定尺寸记录仅对应当时版本。
 
+- 2026-10-18 s10 改为 Git 部署：原来仅上传本机构建文件，现将最新代码推送到 GitHub main，在 s10 `/opt/drawing/repo` 克隆并执行 `git pull --ff-only origin main`，以 rocky 用户运行锁文件安装及生产构建。使用系统 Node.js 22.22.1、npm 9.2.0，跳过 Electron 二进制下载；静态服务仍为原生 Nginx HTTP 80。部署命令为 `sudo /usr/local/sbin/drawing-deploy`，由仓库 `deploy/drawing-deploy.sh` 安装。构建成功后发布到 `releases/` 并切换 `html` 链接，提交号写入 `/opt/drawing/deployed-commit`。首次 Git 部署提交为 `5967f79`，原文件备份到 `/opt/drawing/releases/before-git-20261018T020312Z`。实际制造未提交改动，确认命令拒绝部署且旧首页哈希不变，随后恢复文件再部署成功。12 个发布文件逐一通过 HTTP 读取并与服务器构建逐字节比对一致，入口缓存头正确；本机 Chrome 通过公网 IP 回环访问域名入口，首页点击开始画画可见画布且无页面脚本错误。未添加定时部署或 GitHub 自动触发，也未重复完整绘画功能回归。
+
 - 2026-10-18 s2-lb 上游命名：新增 HTTP `upstream s10 { server 192.168.202.10:80; }`，站点改为 `proxy_pass http://s10;`，无需 `stream` 模块。修改前确认无同名上游；服务器备份位于 `/etc/nginx/drawing-upstream-s10.IqN9eP`。Nginx 配置检查、重载和新 worker 接管通过；服务器直连入口及本机公网 IP 回环验证 TLS、HTML 与生产构建一致，HTTP 308 保留 8000 端口和查询参数。仓库与服务器配置 SHA-256 均为 `8520969742094588716c3dbd82b84b2a8ef4a0712027843f4fac930c86c1bec4`。本次未重复外部节点检测或绘画功能回归。
 
 - 2026-10-18 s2-lb 域名入口：根据最新要求，画板服务器改为 `0.0.0.0:80`，8001 停用。s2-lb 原生 Nginx 监听 8080，`drawing.wujialei.com` 通过 HTTPS 转发到 `http://192.168.202.10/`。内网直连、域名及公网 IP 回环访问验证 HTTP 308 保留路径/参数，HTTPS 验证证书成功、页面返回 200。Chrome 在内网通过真实域名检查安全上下文、Service Worker 控制、绘画、保存、断网刷新重开及像素一致性，无脚本异常。上述检查不代表独立公网验收；用户反馈手机流量无法访问，公网入口故障正在排查。画板原站配置和 s2-lb Nginx 均已备份，原有站点保留。
