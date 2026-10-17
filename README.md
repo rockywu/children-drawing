@@ -22,11 +22,11 @@ npm run preview
 
 ## Web 部署与安装
 
-运行 `npm ci && npm run build`，将 `dist/` 整个目录发布到 HTTP 静态网站服务。按照项目规则，Web 部署只使用 HTTP。支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
+运行 `npm ci && npm run build`，将 `dist/` 整个目录发布到画板服务器的 HTTP 静态服务。域名和 HTTPS 由 s2-lb 统一处理。支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
 
 首页左下角有“保存为 Web App”入口。Chrome / Edge 支持时会打开系统安装确认，其他情况显示适合当前设备的操作步骤；Safari 可添加到程序坞，iPhone / iPad 可添加到主屏幕。Electron 和已用独立应用模式打开的页面隐藏此入口。系统安装需要用户确认，网页不能绕过系统权限。
 
-局域网 HTTP 地址支持画画和本地保存，但浏览器会限制原生 Web App 安装与离线缓存，安装入口会显示手动操作说明。`localhost` 属于浏览器安全上下文例外，生产构建可在本机验证缓存后的离线打开、画画和保存。开发模式不启用离线缓存。缓存更新会等待所有画画窗口关闭后生效，不会自动刷新正在画的作品。
+局域网 HTTP 地址支持画画和本地保存，但浏览器会限制原生 Web App 安装与离线缓存，安装入口会显示手动操作说明。通过 s2-lb 的 HTTPS 域名访问可启用安全上下文中的安装与缓存能力；`localhost` 也是浏览器安全上下文例外。首次联网缓存后可离线打开、画画和保存。开发模式不启用离线缓存。缓存更新会等待所有画画窗口关闭后生效，不会自动刷新正在画的作品。
 
 服务器应正确返回 JavaScript、PNG 与 `application/manifest+json` 类型。对 `index.html`、`sw.js` 和 `manifest.webmanifest` 使用 `Cache-Control: no-cache`；带哈希的 `assets/` 可使用长期缓存。子目录部署须保持完整目录结构，访问 `/drawing/` 而不是 `/drawing`，并避免将缺失的脚本或图片返回成 HTML。
 
@@ -44,7 +44,17 @@ sudo systemctl enable nginx
 sudo systemctl reload nginx
 ```
 
-服务监听 `0.0.0.0:8001`，Nginx 开机自启。本服务器不启用安装包自带的默认 80 端口站点。内网入口为 `http://192.168.202.10:8001/`。此 HTTP 入口支持画画和本地保存；原生 Web App 安装与离线缓存受浏览器安全上下文限制。服务器只提供静态文件，不接收作品数据。
+画板服务器监听 `0.0.0.0:80`，Nginx 开机自启。内网入口为 `http://192.168.202.10/`，原 8001 端口已停用。Nginx 直接提供静态文件，不接收作品数据。
+
+### s2-lb 域名入口与证书
+
+域名入口：`https://drawing.wujialei.com:8080/`。`192.168.202.2` 的原生 Nginx 使用 `deploy/drawing-lb.nginx.conf`，监听 8080，并转发到 `http://192.168.202.10/`。同一端口收到 HTTP 时，返回 308 跳转，保留路径和查询参数。内网已验证；独立公网访问目前故障，正在排查入口链路，内网访问公网 IP 不等于公网验收通过。
+
+证书同步工具为 `deploy/fnos-ssls-sync.py`，部署于 s2-lb 的 `/usr/local/sbin/fnos-ssls-sync`。它通过验证 TLS 的 `https://nginx.wujialei.com:18443` 拉取授权的 `*.wujialei.com`，连接地址固定为 `192.168.202.202`。凭据来自服务器本机 `/home/rocky/nginx.wujialei.com.md`，只保存在 root 可读的 `/etc/fnos-ssls-sync/auth.header`，不得提交到 Git；连接配置为同目录的 `config.json`。
+
+证书位于 `/etc/nginx/ssl/wildcard.wujialei.com/versions/`，`current` 符号链接成套选择证书和私钥。root crontab 每分钟执行一次同步，开机也执行一次；日志为 `/var/log/fnos-ssls-sync.log`，每周轮转。版本未变且实际监听证书一致时不下载或重载；证书变化时校验信任链、有效期、域名、指纹和密钥匹配，再切换链接、检查配置和重载，并核对实际 TLS 证书。失败保留或恢复旧版；429 退避 5 分钟。互斥锁避免手动与定时任务重叠。
+
+证书变更检查使用 `python3 deploy/test_fnos_ssls_sync.py`。服务器手动检查可执行 `sudo /usr/local/sbin/fnos-ssls-sync`；无变化时不输出日志。
 
 ## 可以体验
 
