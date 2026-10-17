@@ -50,4 +50,11 @@ GIF 为固定256色量化、白底，时间按百分之一秒取整；PNG 为白
 
 ## Git 与部署 T009
 
-待两轮通过后的提交、Git 推送与 s10 拉取发布结果回填。沿用现有 `/usr/local/sbin/drawing-deploy`，不 SCP、不上传作品或测试图片、不添加服务、不改 LB。
+- 功能提交 `fc201983e51f8f623700c86d29fa9f5e5bdb0029`（T003～T008），在两轮全部通过后创建并推送 GitHub main。`AGENTS.md` 第7条同时纳入提交。
+- 02:42，s10 从 `09b1714` 执行 `git pull --ff-only origin main`，原生 npm ci/build 成功；`/opt/drawing/deployed-commit` 与仓库HEAD均为功能提交。发布目录 `/opt/drawing/releases/fc201983e51f.asvHh7`，现有 html 链接原子切换。
+- 使用用户指定的 `sudo -n su root` 进入命令作用域执行原有 `/usr/local/sbin/drawing-deploy`；直接 sudo 脚本不匹配该主机免密规则，没有更改任何 sudo 配置。
+- 发布后真实 Chrome 分别打开 `http://192.168.202.10/` 与 `https://drawing.wujialei.com:8000/`：三个编辑器各自绘画、保存、作品小屋重开成功；动画重开2帧，旧普通画室仍可进入。页面异常及上传请求均为空；GIF由发布页面下载后再经 Pillow 确认64×64/2帧/循环。
+- 本机 dist 与远端静态文件 SHA256 完全相同：JS `c8577e2cc934b317c328b44a6cebdb56637d8851ee2acccbdee514e06f731a95`；CSS `23f7707c30507128c820bebc6af8a251773645fea5ce1ec00af68237f68b3ea1`。
+- 目标 Nginx active，依然监听 `0.0.0.0:80`；无新端口/后台。域名入口 HTTP/2 200，TLS仍由既有s2-lb处理。此处域名检查来自当前电脑，不能冒充独立公网节点测试。
+- 没有 SCP、作品上传、测试截图传输、Docker服务或LB改动。Git包含源码、测试、文档；浏览器只将作品写入本机IndexedDB。
+- 原 `v1.0.0` 标签保留原位置，本期未另建发布标签。后续仅文档完成记录提交不改变已验收的功能产物；再通过同一脚本拉取该记录以保持主分支一致。
