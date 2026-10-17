@@ -24,16 +24,23 @@ import {
 } from "lucide-vue-next";
 import ArtScene from "./components/ArtScene.vue";
 import PaintStudio from "./components/PaintStudio.vue";
+import CreativeLab from "./components/CreativeLab.vue";
+import CreativeStudio from "./components/CreativeStudio.vue";
 import FullscreenButton from "./components/FullscreenButton.vue";
 import InstallWebApp from "./components/InstallWebApp.vue";
 import { deleteArtwork, listArtworks } from "./storage";
 import type { Artwork } from "./storage";
+import { creativeKinds, creativeNames } from "./creative/types";
+import type { CreativeKind, CreativeProject } from "./creative/types";
 
-type Page = "home" | "inspiration" | "gallery";
+type Page = "home" | "inspiration" | "gallery" | "creative";
 const page = ref<Page>("home");
 const painting = ref(false);
 const selectedArtwork = ref<Artwork>();
 const selectedTheme = ref("");
+const creativeKind = ref<CreativeKind>();
+const initialProject = ref<CreativeProject>();
+const initialName = ref<string>();
 const artworks = ref<Artwork[]>([]);
 const loading = ref(true);
 const storageError = ref("");
@@ -89,6 +96,10 @@ const pageInfo = computed(
         title: "作品小屋",
         subtitle: "你的想象力，都好好收藏在这里。",
       },
+      creative: {
+        title: "创意工坊",
+        subtitle: "换一种创作方式，把新想法变成自己的作品。",
+      },
     })[page.value],
 );
 
@@ -106,9 +117,34 @@ async function refresh() {
 }
 
 function start(theme = "", artwork?: Artwork) {
+  creativeKind.value = undefined;
+  initialProject.value = undefined;
+  initialName.value = undefined;
   selectedTheme.value = theme;
   selectedArtwork.value = artwork;
+  if (artwork && "creative" in artwork) {
+    // Unknown or damaged projects must enter the guarded editor, never overwrite as a drawing.
+    const kind = artwork.creative?.kind;
+    creativeKind.value = creativeKinds.includes(kind as CreativeKind) ? kind as CreativeKind : "pixel";
+  }
   painting.value = true;
+}
+
+function startCreative(kind: CreativeKind | "drawing", title?: string) {
+  start();
+  initialName.value = title?.slice(0, 60);
+  if (kind !== "drawing") creativeKind.value = kind;
+}
+
+function openCreative(project: CreativeProject, title: string) {
+  startCreative(project.kind, title);
+  initialProject.value = project;
+}
+
+async function leaveCreative() {
+  painting.value = false;
+  page.value = "creative";
+  await refresh();
 }
 
 async function leaveStudio() {
@@ -149,10 +185,20 @@ onMounted(refresh);
 </script>
 
 <template>
+  <CreativeStudio
+    v-if="painting && creativeKind"
+    :kind="creativeKind"
+    :artwork="selectedArtwork"
+    :initial-project="initialProject"
+    :initial-name="initialName"
+    @back="leaveCreative"
+    @saved="refresh"
+  />
   <PaintStudio
-    v-if="painting"
+    v-else-if="painting"
     :artwork="selectedArtwork"
     :theme="selectedTheme"
+    :initial-name="initialName"
     @back="leaveStudio"
     @saved="refresh"
   />
@@ -183,6 +229,13 @@ onMounted(refresh);
         >
           <Lightbulb :size="23" /><span>灵感乐园</span
           ><span v-if="page === 'inspiration'" class="nav-dot"></span>
+        </button>
+        <button
+          :class="{ active: page === 'creative' }"
+          @click="page = 'creative'"
+        >
+          <Sparkles :size="23" /><span>创意工坊</span
+          ><span v-if="page === 'creative'" class="nav-dot"></span>
         </button>
         <button
           :class="{ active: page === 'gallery' }"
@@ -225,7 +278,7 @@ onMounted(refresh);
           <FullscreenButton />
           <div class="little-artist">
             <span class="avatar"><Palette :size="25" /></span
-            ><span>你好，小画家<small>今天也有好多奇妙想法！</small></span
+            ><span>你好，创作者<small>今天也有好多奇妙想法！</small></span
             ><span class="hello-star">✦</span>
           </div>
         </div>
@@ -295,7 +348,10 @@ onMounted(refresh);
             </button>
           </div>
         </section>
+        <CreativeLab compact @start="startCreative" />
       </template>
+
+      <CreativeLab v-if="page === 'creative'" @start="startCreative" @open="openCreative" />
 
       <template v-if="page === 'inspiration'">
         <section class="inspiration-intro">
@@ -338,7 +394,7 @@ onMounted(refresh);
         </div>
       </template>
 
-      <section v-if="page !== 'inspiration'" class="artworks-section">
+      <section v-if="page === 'home' || page === 'gallery'" class="artworks-section">
         <div class="section-heading">
           <h2>
             <span class="section-icon green"><BookOpen :size="22" /></span
@@ -439,7 +495,7 @@ onMounted(refresh);
             <div class="artwork-details">
               <button @click="start(art.theme, art)">
                 <h3>{{ art.name }}</h3>
-                <span>{{ dateLabel(art.updated) }} · 创意已收藏</span></button
+                <span>{{ dateLabel(art.updated) }} · {{ art.creative ? creativeNames[art.creative.kind] || '创作文件' : '创意已收藏' }}</span></button
               ><button
                 class="icon-button delete-art"
                 :aria-label="'删除作品：' + art.name"

@@ -14,7 +14,7 @@ export default defineConfig({
         id: ".",
         name: "画画星球",
         short_name: "画画星球",
-        description: "一个让想象力自由生长的小画室。",
+        description: "适合 8～16 岁，让想象力自由生长的本地创作画室。",
         lang: "zh-CN",
         start_url: ".",
         scope: ".",

@@ -1,3 +1,5 @@
+import type { CreativeProject } from "./creative/types";
+
 export interface Artwork {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export interface Artwork {
   height?: number;
   referenceImage?: Blob;
   tracing?: boolean;
+  creative?: CreativeProject;
 }
 
 let database: Promise<IDBDatabase> | undefined;

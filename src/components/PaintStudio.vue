@@ -46,7 +46,7 @@ import { createArtworkId } from "../artworkId";
 import type { Artwork } from "../storage";
 import { fillRegion } from "../fill";
 
-const props = defineProps<{ artwork?: Artwork; theme: string }>();
+const props = defineProps<{ artwork?: Artwork; theme: string; initialName?: string }>();
 const emit = defineEmits<{ back: []; saved: [] }>();
 type Tool =
   "brush" | "marker" | "eraser" | "fill" | "shape" | "sticker" | "eyedropper";
@@ -151,7 +151,7 @@ const themeNames: Record<string, string> = {
   magic: "住进童话里",
 };
 const name = ref(
-  props.artwork?.name ?? (themeNames[props.theme] || "我的奇妙世界"),
+  props.artwork?.name ?? props.initialName ?? (themeNames[props.theme] || "我的奇妙世界"),
 );
 const savedName = ref(name.value);
 const id = props.artwork?.id ?? createArtworkId();

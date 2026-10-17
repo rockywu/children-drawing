@@ -25,7 +25,7 @@
     "vite-plugin-pwa": "^2.0.0",
     "vue-tsc": "^3.1.1"
   },
-  "description": "画画星球：让 8～12 岁孩子自由创作的绘画软件",
+  "description": "画画星球：让 8～16 岁孩子自由创作的绘画软件",
   "author": "Little Art Planet",
   "main": "electron/main.cjs",
   "build": {
