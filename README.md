@@ -50,6 +50,8 @@ sudo systemctl reload nginx
 
 域名入口：`https://drawing.wujialei.com:8000/`。主路由将公网 TCP 8000 映射到 `192.168.202.2:80`；s2-lb 的原生 Nginx 使用 `deploy/drawing-lb.nginx.conf`，在 80 端口处理 TLS，再转发到 `http://192.168.202.10/`。部署时需禁用 s2-lb 的 Nginx 默认欢迎站点，原 8080 TLS 监听保留。HTTP 返回 308 跳转到 HTTPS，保留访问端口、路径和查询参数。2026-10-18 独立公网节点确认 18080 TCP 连通，配置调整后用户确认 18080 可以访问，随后将公网入口改为 8000；本机验证 8000 的 TLS、画板构建内容和跳转正确。原公网 8080 入站超时的具体原因未确定。
 
+画板上游使用 HTTP `upstream s10`，成员为 `192.168.202.10:80`，站点通过 `proxy_pass http://s10;` 转发。该配置放在 `http` 上下文中，不需要 TCP/UDP 的 `stream` 模块。
+
 证书同步工具为 `deploy/fnos-ssls-sync.py`，部署于 s2-lb 的 `/usr/local/sbin/fnos-ssls-sync`。它通过验证 TLS 的 `https://nginx.wujialei.com:18443` 拉取授权的 `*.wujialei.com`，连接地址固定为 `192.168.202.202`。凭据来自服务器本机 `/home/rocky/nginx.wujialei.com.md`，只保存在 root 可读的 `/etc/fnos-ssls-sync/auth.header`，不得提交到 Git；连接配置为同目录的 `config.json`。
 
 证书位于 `/etc/nginx/ssl/wildcard.wujialei.com/versions/`，`current` 符号链接成套选择证书和私钥。root crontab 每分钟执行一次同步，开机也执行一次；日志为 `/var/log/fnos-ssls-sync.log`，每周轮转。版本未变且实际监听证书一致时不下载或重载；证书变化时校验信任链、有效期、域名、指纹和密钥匹配，再切换链接、检查配置和重载，并核对实际 TLS 证书。失败保留或恢复旧版；429 退避 5 分钟。互斥锁避免手动与定时任务重叠。
