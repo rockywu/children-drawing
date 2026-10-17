@@ -327,7 +327,7 @@ function getPoint(event: PointerEvent): Point {
 }
 
 function setView(percent: number, offset: Point) {
-  zoom.value = Math.max(100, Math.min(200, percent));
+  zoom.value = Math.max(100, Math.min(300, percent));
   const holder = canvasHolder.value!;
   const paper = canvasPaper.value!;
   const limitX = Math.max(
@@ -432,7 +432,7 @@ function pointerMove(event: PointerEvent) {
     const current = touchGeometry();
     const percent = Math.max(
       100,
-      Math.min(200, (pinch.zoom * current.distance) / pinch.distance),
+      Math.min(300, (pinch.zoom * current.distance) / pinch.distance),
     );
     const ratio = percent / pinch.zoom;
     setView(percent, {
@@ -1075,12 +1075,12 @@ onBeforeUnmount(() => {
               class="drawing-range"
               type="range"
               min="100"
-              max="200"
+              max="300"
               step="10"
               :value="zoom"
-              :style="{ '--range-progress': `${zoom - 100}%` }"
+              :style="{ '--range-progress': `${(zoom - 100) / 2}%` }"
               aria-label="画布缩放"
-              title="100%～200%"
+              title="100%～300%"
               @input="changeZoom"
             />
             <output>{{ Math.round(zoom) }}%</output>

@@ -25,6 +25,7 @@ import {
 import ArtScene from "./components/ArtScene.vue";
 import PaintStudio from "./components/PaintStudio.vue";
 import FullscreenButton from "./components/FullscreenButton.vue";
+import InstallWebApp from "./components/InstallWebApp.vue";
 import { deleteArtwork, listArtworks } from "./storage";
 import type { Artwork } from "./storage";
 
@@ -202,6 +203,7 @@ onMounted(refresh);
         <small>每一笔，都是你的独一无二</small>
       </div>
       <div class="sidebar-bottom">
+        <InstallWebApp />
         <button @click="showHelp = true">
           <CircleHelp :size="20" />画室使用指南<ChevronRight
             :size="16"
