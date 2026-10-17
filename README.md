@@ -22,7 +22,7 @@ npm run preview
 
 ## Web 部署与安装
 
-运行 `npm ci && npm run build`，将 `dist/` 整个目录发布到画板服务器的 HTTP 静态服务。域名和 HTTPS 由 s2-lb 统一处理。支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
+s10 从 GitHub 仓库 `https://github.com/rockywu/children-drawing.git` 的 `main` 分支拉取源码，在服务器执行 `npm ci && npm run build`，再发布完整 `dist/` 到 HTTP 静态服务。域名和 HTTPS 由 s2-lb 统一处理。支持站点根目录或以 `/` 结尾的子目录（例如 `/drawing/`）；不要只上传 `index.html`。
 
 首页左下角有“保存为 Web App”入口。Chrome / Edge 支持时会打开系统安装确认，其他情况显示适合当前设备的操作步骤；Safari 可添加到程序坞，iPhone / iPad 可添加到主屏幕。Electron 和已用独立应用模式打开的页面隐藏此入口。系统安装需要用户确认，网页不能绕过系统权限。
 
@@ -45,6 +45,28 @@ sudo systemctl reload nginx
 ```
 
 画板服务器监听 `0.0.0.0:80`，Nginx 开机自启。内网入口为 `http://192.168.202.10/`，原 8001 端口已停用。Nginx 直接提供静态文件，不接收作品数据。
+
+### s10 使用 Git 更新
+
+代码位于 `/opt/drawing/repo`，属于 `rocky` 用户；服务器使用 Node.js 22.22.1 和 npm。部署脚本为 `deploy/drawing-deploy.sh`，安装到 `/usr/local/sbin/drawing-deploy`。后续先将代码推送到 GitHub，再登录 s10 执行：
+
+```bash
+sudo /usr/local/sbin/drawing-deploy
+```
+
+脚本以 `rocky` 用户执行 `git pull --ff-only origin main`、安装锁文件指定的依赖并构建 Web；跳过 Electron 二进制下载。本地有修改、Git 拉取失败或构建失败时停止，保留正在服务的文件。构建成功后将静态文件发布到 `/opt/drawing/releases/`，通过 `/opt/drawing/html` 符号链接切换版本，无需重载 Nginx。原上传文件在首次切换时备份为 `releases/before-git-*`，历史版本保留；已部署 Git 提交记录在 `/opt/drawing/deployed-commit`。这是手动部署命令，没有配置定时更新或 GitHub 自动触发。
+
+首次安装需以系统包管理器安装 Git、Node.js（至少 22.12）与 npm，并创建代码目录：
+
+```bash
+sudo install -d -m 755 -o rocky -g rocky /opt/drawing/repo
+sudo install -d -m 755 /opt/drawing/releases
+git clone --branch main --single-branch https://github.com/rockywu/children-drawing.git /opt/drawing/repo
+sudo install -m 755 /opt/drawing/repo/deploy/drawing-deploy.sh /usr/local/sbin/drawing-deploy
+sudo /usr/local/sbin/drawing-deploy
+```
+
+部署脚本自身调整后，需要重新执行上面的 `sudo install` 更新服务器命令。
 
 ### s2-lb 域名入口与证书
 
